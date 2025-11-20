@@ -218,6 +218,7 @@
             border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
 
+        /* === UPDATED USER PROFILE + MENU + MODAL STYLES === */
         .user-profile {
             display: flex;
             align-items: center;
@@ -226,10 +227,46 @@
             border-radius: 0.5rem;
             cursor: pointer;
             transition: background 0.2s;
+            position: relative;
         }
 
         .user-profile:hover {
             background: #272727;
+        }
+
+        .user-menu {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            margin: 0 0.75rem;
+            background: #252525;
+            border: 1px solid #333;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: fadeInUp 0.2s ease-in-out;
+        }
+
+        .user-menu.hidden {
+            display: none;
+        }
+
+        .user-menu-item {
+            display: block;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: none;
+            border: none;
+            color: #d1d5db;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: left;
+        }
+
+        .user-menu-item:hover {
+            background: #333;
         }
 
         .user-avatar {
@@ -265,6 +302,143 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        /* Modal overlay for auth */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: #1a1a1a;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 400px;
+            padding: 2rem;
+            animation: slideUp 0.3s ease-in-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #9CA3AF;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #272727;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #d1d5db;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: #272727;
+            border: 1px solid #404040;
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: #D97757;
+        }
+
+        .form-button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #D97757;
+            border: none;
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .form-button:hover {
+            opacity: 0.9;
+        }
+
+        .form-switch {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 14px;
+            color: #9CA3AF;
+        }
+
+        .form-switch-link {
+            color: #D97757;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .form-switch-link:hover {
+            text-decoration: underline;
         }
 
         /* --- Main Content --- */
@@ -770,12 +944,19 @@
             <div class="sidebar-recents" style="display: none;"></div>
 
             <div class="sidebar-footer">
-                <div class="user-profile">
+                <div class="user-profile" id="userProfile">
                     <div class="user-avatar">U</div>
                     <div class="user-info">
                         <div class="user-name">User</div>
                         <div class="user-plan">Free plan</div>
                     </div>
+                </div>
+
+                <!-- User dropdown menu -->
+                <div class="user-menu hidden" id="userMenu">
+                    <button class="user-menu-item">Profile</button>
+                    <button class="user-menu-item" id="userMenuLogin">Log in / Sign up</button>
+                    <button class="user-menu-item">Settings</button>
                 </div>
             </div>
         </aside>
@@ -814,12 +995,38 @@
         </main>
     </div>
 
+    <!-- Auth Modal -->
+    <div class="modal-overlay hidden" id="authModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="authTitle">Log in</h2>
+                <button class="modal-close" id="authClose">✕</button>
+            </div>
+            <form id="authForm" onsubmit="return false;">
+                <div class="form-group">
+                    <label class="form-label" for="authEmail">Email</label>
+                    <input type="email" id="authEmail" class="form-input" placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="authPassword">Password</label>
+                    <input type="password" id="authPassword" class="form-input" placeholder="••••••••">
+                </div>
+                <button class="form-button" id="authSubmit">Continue</button>
+            </form>
+            <div class="form-switch">
+                <span id="authSwitchText">Don't have an account?</span>
+                <span class="form-switch-link" id="authSwitch">Sign up</span>
+            </div>
+        </div>
+    </div>
+
     <script>
         // State
         let messages = [];
         let inputValue = '';
         let isTyping = false;
         let isSidebarOpen = window.innerWidth >= 768;
+        let isLoginMode = true;
 
         const elements = {
             sidebar: document.getElementById('sidebar'),
@@ -832,6 +1039,16 @@
             chatContainer: document.getElementById('chatContainer'),
             inputArea: document.getElementById('inputArea'),
             headerTitle: document.getElementById('headerTitle'),
+            // user + modal
+            userProfile: document.getElementById('userProfile'),
+            userMenu: document.getElementById('userMenu'),
+            userMenuLogin: document.getElementById('userMenuLogin'),
+            authModal: document.getElementById('authModal'),
+            authClose: document.getElementById('authClose'),
+            authTitle: document.getElementById('authTitle'),
+            authSwitch: document.getElementById('authSwitch'),
+            authSwitchText: document.getElementById('authSwitchText'),
+            authSubmit: document.getElementById('authSubmit'),
         };
 
         // Initialize
@@ -847,6 +1064,48 @@
             elements.sidebarOverlay.addEventListener('click', closeSidebar);
             elements.newChatBtn.addEventListener('click', newChat);
             window.addEventListener('resize', handleResize);
+
+            // User menu
+            if (elements.userProfile) {
+                elements.userProfile.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleUserMenu();
+                });
+            }
+
+            if (elements.userMenuLogin) {
+                elements.userMenuLogin.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openAuthModal();
+                });
+            }
+
+            // Auth modal
+            if (elements.authClose) {
+                elements.authClose.addEventListener('click', closeAuthModal);
+            }
+            if (elements.authModal) {
+                elements.authModal.addEventListener('click', (e) => {
+                    if (e.target === elements.authModal) {
+                        closeAuthModal();
+                    }
+                });
+            }
+            if (elements.authSwitch) {
+                elements.authSwitch.addEventListener('click', toggleAuthMode);
+            }
+
+            // Close user menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (
+                    elements.userMenu &&
+                    !elements.userMenu.classList.contains('hidden') &&
+                    !elements.userProfile.contains(e.target) &&
+                    !elements.userMenu.contains(e.target)
+                ) {
+                    elements.userMenu.classList.add('hidden');
+                }
+            });
         }
 
         function toggleSidebar() {
@@ -999,7 +1258,8 @@
             sendBtn.addEventListener('click', handleSendMessage);
             updateSendBtn();
 
-            attachBtn.addEventListener('click', () => {
+            attachBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 attachMenu.classList.toggle('hidden');
             });
 
@@ -1030,6 +1290,37 @@
                     sendBtn.style.cursor = 'not-allowed';
                     sendBtn.disabled = true;
                 }
+            }
+        }
+
+        // User menu helpers
+        function toggleUserMenu() {
+            if (!elements.userMenu) return;
+            elements.userMenu.classList.toggle('hidden');
+        }
+
+        // Auth modal helpers
+        function openAuthModal() {
+            if (!elements.authModal) return;
+            elements.authModal.classList.remove('hidden');
+            if (elements.userMenu) elements.userMenu.classList.add('hidden');
+        }
+
+        function closeAuthModal() {
+            if (!elements.authModal) return;
+            elements.authModal.classList.add('hidden');
+        }
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            if (isLoginMode) {
+                elements.authTitle.textContent = 'Log in';
+                elements.authSwitchText.textContent = "Don't have an account?";
+                elements.authSwitch.textContent = 'Sign up';
+            } else {
+                elements.authTitle.textContent = 'Sign up';
+                elements.authSwitchText.textContent = 'Already have an account?';
+                elements.authSwitch.textContent = 'Log in';
             }
         }
 
